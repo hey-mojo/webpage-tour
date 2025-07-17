@@ -422,6 +422,10 @@
       this.inProgress = true;
       this.currentStep = stepIndex;
 
+      // Check for object keys and assign value
+      if (this.steps[this.currentStep].activateButton === undefined) {
+        this.steps[this.currentStep] = { activateButton: "" };
+      }
       // Remove Event Listener to tooltip
       if (this.steps[this.lastStep].click_listener) {
         this.spotlight.classList.remove("tour-spotlight-cursor");
@@ -844,9 +848,9 @@
     }
   }
 
-  function startTour_1() {
+  function startTour() {
     createTourStyle();
-    let stepToStart = localStorage.getItem("myKey") || 1;
+    let stepToStart = localStorage.getItem("myKey") || 3;
     const tour = new WebPageTour(
       [
         {
@@ -944,7 +948,6 @@
     tour.start();
   }
   //document.addEventListener("DOMContentLoaded", () => {
-
-  startTour_1();
+  startTour();
   //});
 })();
