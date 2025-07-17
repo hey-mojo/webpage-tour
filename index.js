@@ -267,7 +267,7 @@
     openGalery = () => {
       Fancybox.show([
         {
-          src: "https://us.evocdn.io/dealer/1348/content/media/My_Theme/assets/slide-tour/slide_Page_01.jpg",
+          src: "/public/images/slide_Page_01.jpg",
           type: "image",
           caption: "Image 1",
         },
@@ -847,97 +847,100 @@
   function startTour_1() {
     createTourStyle();
     let stepToStart = localStorage.getItem("myKey") || 1;
-    const tour = new WebPageTour([
-      {
-        title: "Welcome to our site",
-        description:
-          "After You logeed in, You willarrive at your dashboard page that looks some like this. This page displays some useful account information.",
-      },
-      {
-        element: ".account-btn",
-        title: "Flyout menu access button",
-        description:
-          "By clicking on this button you wil reveal a flyout menu with lots more account features.",
-        click_listener: true,
-        adjust_spotlight: { width: 10, height: 10 },
-      },
-      {
-        element: ".customertools",
-        title: "Flyout menu",
-        description:
-          " Study these in your own time. The main sections you may wish to visit are...",
-        activateButton: ".account-btn",
-        adjust_tooltip: {
-          left: -280,
+    const tour = new WebPageTour(
+      [
+        {
+          title: "Welcome to our site",
+          description:
+            "After You logeed in, You willarrive at your dashboard page that looks some like this. This page displays some useful account information.",
         },
-      },
-      {
-        element: ".sidebar-myorders",
-        title: "Orders section",
-        description:
-          "By clicking on this link you'll have access to all your order's details",
-        activateButton: ".account-btn",
-        fixed_element: ".customertools",
-        adjust_tooltip: {
-          left: -280,
+        {
+          element: ".account-btn",
+          title: "Flyout menu access button",
+          description:
+            "By clicking on this button you wil reveal a flyout menu with lots more account features.",
+          click_listener: true,
+          adjust_spotlight: { width: 10, height: 10 },
         },
-      },
-      {
-        element: ".sidebar-myaccountoverview",
-        title: "Account overview section",
-        description:
-          "By activationg this link you'll reveal a consolidated view of your account.",
-        activateButton: ".account-btn",
-        fixed_element: ".customertools",
-        adjust_tooltip: {
-          left: -280,
+        {
+          element: ".customertools",
+          title: "Flyout menu",
+          description:
+            " Study these in your own time. The main sections you may wish to visit are...",
+          activateButton: ".account-btn",
+          adjust_tooltip: {
+            left: -280,
+          },
         },
-      },
-      {
-        element: ".sidebar-myinvoice",
-        title: "Invoice history section",
-        description: "The following option takes you to the Invoice Section",
-        activateButton: ".account-btn",
-        fixed_element: ".customertools",
-        adjust_tooltip: {
-          left: -280,
+        {
+          element: ".sidebar-myorders",
+          title: "Orders section",
+          description:
+            "By clicking on this link you'll have access to all your order's details",
+          activateButton: ".account-btn",
+          fixed_element: ".customertools",
+          adjust_tooltip: {
+            left: -280,
+          },
         },
-      },
-      {
-        element: "button.btn-outlined:nth-child(2)",
-        title: "Switch account",
-        description:
-          "If you ever need to switch accounts or Jobs you can do so here...",
-        activateButton: ".account-btn",
-        fixed_element: ".customertools",
-        adjust_tooltip: {
-          left: -280,
+        {
+          element: ".sidebar-myaccountoverview",
+          title: "Account overview section",
+          description:
+            "By activationg this link you'll reveal a consolidated view of your account.",
+          activateButton: ".account-btn",
+          fixed_element: ".customertools",
+          adjust_tooltip: {
+            left: -280,
+          },
         },
-      },
-      {
-        element: ".switch-account-header",
-        title: "Switch account",
-        description: "...or  you can also switch your account here.",
-        adjust_spotlight: { height: 10 },
-      },
-      {
-        element: ".sidebar-myorders",
-        title: "Orders section",
-        description:
-          "Let's look at the order section. Click on 'Orders' button",
-        activateButton: ".account-btn",
-        fixed_element: ".customertools",
-        click_listener: true,
-        adjust_tooltip: {
-          left: -280,
+        {
+          element: ".sidebar-myinvoice",
+          title: "Invoice history section",
+          description: "The following option takes you to the Invoice Section",
+          activateButton: ".account-btn",
+          fixed_element: ".customertools",
+          adjust_tooltip: {
+            left: -280,
+          },
         },
-      },
-      {
-        title: "Thank you",
-        description:
-          "If you want some more information about the platform please <a id='show-lightbox-show'>click here<a/>",
-      },
-    ]);
+        {
+          element: "button.btn-outlined:nth-child(2)",
+          title: "Switch account",
+          description:
+            "If you ever need to switch accounts or Jobs you can do so here...",
+          activateButton: ".account-btn",
+          fixed_element: ".customertools",
+          adjust_tooltip: {
+            left: -280,
+          },
+        },
+        {
+          element: ".switch-account-header",
+          title: "Switch account",
+          description: "...or  you can also switch your account here.",
+          adjust_spotlight: { height: 10 },
+        },
+        {
+          element: ".sidebar-myorders",
+          title: "Orders section",
+          description:
+            "Let's look at the order section. Click on 'Orders' button",
+          activateButton: ".account-btn",
+          fixed_element: ".customertools",
+          click_listener: true,
+          adjust_tooltip: {
+            left: -280,
+          },
+        },
+        {
+          title: "Thank you",
+          description:
+            "If you want some more information about the platform please <a id='show-lightbox-show'>click here<a/>",
+        },
+      ],
+      stepToStart
+    );
     tour.start();
   }
   //document.addEventListener("DOMContentLoaded", () => {
