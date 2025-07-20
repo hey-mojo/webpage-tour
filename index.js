@@ -1,10 +1,4 @@
 (() => {
-  console.log(window.location.href === `${baseUrl}/myaccount`);
-  // if (
-  //   !document.querySelector(".ex-a-2363423.ex-u-2046736.ex-customer") &&
-  //   window.location.pathname !== "/myaccount"
-  // )
-  //   return;
   function createTourStyle() {
     const style = document.createElement("style");
     style.classList.add("tour-style");
@@ -118,19 +112,33 @@
       display: flex;
       justify-content: space-between;
     }
+    .bg-highlighted {
+      background-color: rgb(251, 241, 210);
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      display: block;
+      padding: 3px 7px;
+    }
 
   `;
     document.head.appendChild(style);
   }
 
   class WebPageTour {
-    constructor(steps, stepToStart) {
+    constructor(steps, stepToStart, localStorageName) {
+      // filter elements what exist
       this.steps = steps.filter((step) => {
         return !step.element || document.querySelector(step.element);
       });
-      this.currentStep = stepToStart > steps.length ? 0 : stepToStart - 1;
-      this.stepToStart = stepToStart - 1;
-      this.lastStep = 0;
+      // check stepTo Start and set current step
+      this.currentStep =
+        stepToStart <= steps.length && stepToStart > 0 ? stepToStart - 1 : 0;
+      // set variable to form all steps
+      this.stepToStart = 0;
+      // set last step to know what step was last
+      this.lastStep = this.currentStep;
+
       this.overlay = null;
       this.spotlight = null;
       this.tooltipElement = null;
@@ -143,13 +151,31 @@
       this.isActive = false;
       this.isInProcess = false;
       this.scrollLockTimeout = null;
+
       this.lastActiveButton = null;
+      this.lastActiveSelect = null;
       this.inProgress = false;
       this.isSmallScreen = false;
+      this.localStorageName = localStorageName;
+      this.selectOptionsElement = null;
 
       // Bind methods to maintain 'this' context
       this.handleResize = this.handleResize.bind(this);
       this.activateButton = this.activateButton.bind(this);
+      this.createSelectOptions = this.createSelectOptions.bind(this);
+      this.waitForClassRemoval = this.waitForClassRemoval.bind(this);
+
+      //complete objects
+      const checkKeysString = ["activateButton"];
+      const checkKeysBoolean = ["handle_select_click", "click_listener"];
+      console.log(this.steps);
+      checkKeysString.forEach((e) => {
+        this.steps.forEach((obj) => (obj[e] ??= ""));
+      });
+      checkKeysBoolean.forEach((e) => {
+        this.steps.forEach((obj) => (obj[e] ??= false));
+      });
+      console.log(this.steps);
     }
 
     start() {
@@ -267,7 +293,7 @@
     openGalery = () => {
       Fancybox.show([
         {
-          src: "/public/images/slide_Page_01.jpg",
+          src: "https://cdn.jsdelivr.net/gh/hey-mojo/webpage-tour/public/images/slide_Page_01.jpg",
           type: "image",
           caption: "Image 1",
         },
@@ -375,7 +401,7 @@
 
         this.tooltipTitle.textContent = "Resize the window";
         this.tooltipDescription.textContent =
-          "To use our tour, please resize your window";
+          "To use our tour, please resize your window or use desktop";
         this.tooltipDots.style.display = "none";
         this.tooltipButtons.style.display = "none";
 
@@ -414,6 +440,9 @@
           this.createTooltipContent(this.currentStep);
           this.isSmallScreen = false;
         }
+        if (this.selectOptionsElement) {
+          this.positionSelectOption();
+        }
       }
     }
 
@@ -421,34 +450,82 @@
       if (this.inProgress) return;
       this.inProgress = true;
       this.currentStep = stepIndex;
+      console.log(
+        "Current step: ",
+        this.currentStep,
+        "Step started from: ",
+        this.stepToStart,
+        "Last Step: ",
+        this.lastStep
+      );
+      // check if this is the first run of the first step
+      const isFirstRun = this.currentStep === this.lastStep;
 
-      // Check for object keys and assign value
-      if (this.steps[this.currentStep].activateButton === undefined) {
-        this.steps[this.currentStep] = { activateButton: "" };
-      }
-      // Remove Event Listener to tooltip
-      if (this.steps[this.lastStep].click_listener) {
+      // Clear tooltip style
+      this.tooltipElement.style = "";
+
+      // Remove Event Listener to tooltip if this is not first Run
+      if (this.steps[this.lastStep].click_listener && !isFirstRun) {
         this.spotlight.classList.remove("tour-spotlight-cursor");
         this.spotlight.removeEventListener("click", () => {
           this.next();
         });
+      }
+      if (this.steps[this.lastStep].handle_select_click) {
+        this.selectOptionsElement.remove();
+        this.selectOptionsElement = null;
+      }
+      if (
+        (this.steps[this.currentStep].handle_select_click &&
+          this.steps[this.currentStep].activateButton) ||
+        (this.steps[this.currentStep].activate_button_option &&
+          this.steps[this.currentStep].activateButton)
+      ) {
+        const select = document.querySelector(
+          this.steps[this.currentStep].activateButton
+        );
+        select.selectedIndex =
+          this.steps[this.currentStep].activate_button_option - 1;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
       }
 
       this.lastActiveButton = this.steps[this.lastStep].activateButton;
       const currentBtn = this.steps[this.currentStep].activateButton;
       const isBtnActive = this.lastActiveButton === currentBtn;
 
-      // Deactivate the button from last step if there is one and it is not the same as current one and activate one if there is "activateButton" option. isBtnActive shows that we don't need to adjust spotlight because current element is active and no transition
+      this.lastActiveSelect = this.steps[this.lastStep].handle_select_click;
+      const ishandle_select_click =
+        this.steps[this.currentStep].handle_select_click;
 
+      // Deactivate the button from last step if there is one and it is not the same as cu3rrent one and activate one if there is "activateButton" option. isBtnActive shows that we don't need to adjust spotlight because current element is active and no transition
+
+      //if we have button activated from last step and we have button to activate on this step and they are different and it is not select element
       if (this.lastActiveButton && currentBtn && !isBtnActive) {
-        this.activateButton(this.steps[this.lastStep]);
-        await this.activateButton(this.steps[this.currentStep]);
-      } else if (!this.lastActiveButton && currentBtn) {
-        await this.activateButton(this.steps[this.currentStep]);
+        if (!this.lastActiveSelect) {
+          this.activateButton(this.steps[this.lastStep]);
+        }
+        if (!ishandle_select_click) {
+          await this.activateButton(this.steps[this.currentStep]);
+        }
+      } else if (
+        (!this.lastActiveButton && currentBtn) ||
+        (isFirstRun && currentBtn)
+      ) {
+        if (!ishandle_select_click) {
+          await this.activateButton(this.steps[this.currentStep]);
+        }
       } else if (this.lastActiveButton && !currentBtn) {
-        this.activateButton(this.steps[this.lastStep]);
+        if (!this.lastActiveSelect) {
+          this.activateButton(this.steps[this.lastStep]);
+        }
       }
-      this.lastActiveButton = currentBtn;
+
+      if (!ishandle_select_click) {
+        this.lastActiveButton = currentBtn;
+      } else if (ishandle_select_click) {
+        this.createSelectOptions(this.steps[this.currentStep].element);
+        this.lastActiveSelect = currentBtn;
+      }
 
       const step = this.steps[this.currentStep];
       let element;
@@ -471,6 +548,12 @@
           this.inProgress = false;
           this.next();
           return;
+        }
+        if (this.selectOptionsElement) {
+          element =
+            this.selectOptionsElement.querySelectorAll("div")[
+              step.select_option - 1
+            ];
         }
 
         // Get element position
@@ -537,7 +620,13 @@
 
       // Create tooltip content
       this.createTooltipContent(stepIndex);
-
+      //assign style to the tooltip
+      if (this.steps[this.currentStep].tooltip_style) {
+        Object.assign(
+          this.tooltipElement.style,
+          this.steps[this.currentStep].tooltip_style
+        );
+      }
       // Add Event Listener to tooltip
       if (this.steps[this.currentStep].click_listener) {
         this.spotlight.classList.add("tour-spotlight-cursor");
@@ -545,6 +634,25 @@
           this.next();
         });
       }
+
+      if (
+        this.steps[this.currentStep].await_class_removal &&
+        this.steps[this.currentStep].await_element
+      ) {
+        const buttonsTour = document.querySelectorAll(".tour-buttons button");
+        const originalStates = Array.from(buttonsTour).map(
+          (btn) => btn.disabled
+        );
+        buttonsTour.forEach((btn) => (btn.disabled = true));
+        await this.waitForClassRemoval(
+          this.steps[this.currentStep].await_element,
+          this.steps[this.currentStep].await_class_removal
+        );
+        buttonsTour.forEach((btn, i) => {
+          btn.disabled = originalStates[i];
+        });
+      }
+
       this.lastStep = this.currentStep;
       this.inProgress = false;
     }
@@ -773,7 +881,7 @@
       if (this.currentStep < this.steps.length - 1) {
         this.showStep(this.currentStep + 1);
       } else {
-        this.end();
+        this.end(this.localStorageName);
       }
     };
     prev = () => {
@@ -782,7 +890,7 @@
       }
     };
 
-    end = () => {
+    end = (recordLocaleStorage = "") => {
       if (!this.isActive) return;
       // Click on button if active
       if (this.lastActiveButton) {
@@ -812,6 +920,13 @@
         clearTimeout(this.scrollLockTimeout);
       }
       document.querySelector("style.tour-style").remove();
+      if (recordLocaleStorage) {
+        window.localStorage.setItem(recordLocaleStorage, "true");
+      }
+      // Clear createdElement
+      if (this.selectOptionsElement) {
+        this.selectOptionsElement.remove();
+      }
       this.isActive = false;
     };
     activateButton(step) {
@@ -823,6 +938,59 @@
         setTimeout(resolve, 500);
       });
     }
+    positionSelectOption() {
+      const rect = document
+        .querySelector(this.steps[this.currentStep].element)
+        .getBoundingClientRect();
+      this.selectOptionsElement.style.left = rect.left + window.scrollX + "px";
+      this.selectOptionsElement.style.top =
+        rect.top + rect.height + window.scrollY + 2 + "px";
+      this.selectOptionsElement.style.width = rect.width + "px";
+    }
+    createSelectOptions(element) {
+      const select = document.querySelector(element);
+
+      // Get all computed styles from the original select
+      const computed = window.getComputedStyle(select);
+
+      // Create visual container
+      const visualDropdown = document.createElement("div");
+      visualDropdown.style.position = "absolute";
+
+      // Copy important visual styles
+      visualDropdown.style.minWidth = "150px";
+      visualDropdown.style.background = "#eee";
+      visualDropdown.style.borderRadius = "5px";
+      visualDropdown.style.color = computed.color;
+      visualDropdown.style.font = computed.font;
+      visualDropdown.style.padding = computed.padding;
+      visualDropdown.style.boxShadow =
+        "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;";
+      visualDropdown.style.border = "1px solid #ccc";
+
+      // Add each option as a visual item
+      Array.from(select.options).forEach((option) => {
+        const optionDiv = document.createElement("div");
+        optionDiv.textContent = option.text;
+
+        // Copy the option style (basic text style)
+        optionDiv.style.padding = "6px 8px";
+        optionDiv.style.color = computed.color;
+        optionDiv.style.font = computed.font;
+        optionDiv.style.background = "#eee";
+        optionDiv.style.borderBottom = "1px solid #ddd";
+
+        visualDropdown.appendChild(optionDiv);
+      });
+
+      // assign to select element
+      this.selectOptionsElement = visualDropdown;
+      //position element
+      this.positionSelectOption();
+      // Add to document
+      document.body.appendChild(visualDropdown);
+    }
+
     disableScroll() {
       window.addEventListener("wheel", this.preventScroll, {
         passive: false,
@@ -846,11 +1014,32 @@
         e.preventDefault();
       }
     }
+    waitForClassRemoval(selector, className) {
+      return new Promise((resolve) => {
+        const el = document.querySelector(selector);
+
+        if (!el) return resolve(el);
+        // If element is already without the class, resolve immediately
+        if (el && !el.classList.contains(className)) {
+          return resolve(el);
+        }
+
+        // Watch for class changes
+        const observer = new MutationObserver(() => {
+          if (!el.classList.contains(className)) {
+            observer.disconnect();
+            resolve(el);
+          }
+        });
+
+        observer.observe(el, { attributes: true, attributeFilter: ["class"] });
+      });
+    }
   }
 
-  function startTour() {
+  function startTour_1() {
     createTourStyle();
-    let stepToStart = localStorage.getItem("myKey") || 3;
+    let stepToStart = localStorage.getItem("stepToStartTour") || 1;
     const tour = new WebPageTour(
       [
         {
@@ -885,6 +1074,7 @@
           fixed_element: ".customertools",
           adjust_tooltip: {
             left: -280,
+            top: -50,
           },
         },
         {
@@ -926,15 +1116,117 @@
           adjust_spotlight: { height: 10 },
         },
         {
-          element: ".sidebar-myorders",
-          title: "Orders section",
+          title: "Thank you",
           description:
-            "Let's look at the order section. Click on 'Orders' button",
-          activateButton: ".account-btn",
-          fixed_element: ".customertools",
+            "If you want some more information about the platform please <a id='show-lightbox-show'>click here<a/>",
+        },
+      ],
+      stepToStart,
+      "isDashboardTourDone"
+    );
+    tour.start();
+  }
+  function startTour_2() {
+    createTourStyle();
+    let stepToStart = localStorage.getItem("stepToStartTour") || 1;
+    const tour = new WebPageTour(
+      [
+        {
+          title: "Welcome to your Account Overview page",
+          description: "Need to make some text for this section.",
+        },
+        {
+          element: ".account-summary-select",
+          title: "This will reveal a consolidated view of your account",
+          description: "By clicking on this button you wil reveal a selector.",
           click_listener: true,
+        },
+        {
+          element: ".account-summary-select",
+          title: "Job selector",
+          description:
+            "After you click on 'Job 0' the dropdown selector will be revealed. Click on it",
+          handle_select_click: true,
+          select_option: 2,
+          click_listener: true,
+        },
+        {
+          element: "#account_0 .account-balance-select",
+          title: "Reveal all accounts",
+          description:
+            "Clicking on the 'Account Consolidated' dropdown will reveal details of your individual jobs while the consolidated vies is a total of all jobs together. Click on the first item after 'Account consolidated'.",
+          click_listener: true,
+          activateButton: ".account-summary-select",
+          activate_button_option: 2,
+          tooltip_style: {
+            maxWidth: "500px",
+          },
+          adjust_tooltip: { left: -100 },
+        },
+        {
+          element: "#account_0 .account-balance-select",
+          title: "Outstanding amount",
+          description: "This selector will show you Outstanding amount.",
+          activateButton: ".account-summary-select",
+          activate_button_option: 2,
+          handle_select_click: true,
+          select_option: 1,
+          click_listener: true,
+        },
+        {
+          element: "#account_0 .account-balance-select",
+          title: "Last statement balance",
+          description: "This selector will show you Last statement balance.",
+          activateButton: ".account-summary-select",
+          activate_button_option: 2,
+          handle_select_click: true,
+          select_option: 2,
+          click_listener: true,
+        },
+        {
+          title: "Account Balance",
+          description:
+            "The 'Make A Payment' button will take you to the payment screen based on which oprion is selected. Either 'Outstanding Amount (this includes, open incoices from last statement and current new changes) or 'Last Statement'",
+          element: "#make-payment-0 > a",
+          click_listener: true,
+          activateButton: "#account_0 .account-balance-select",
+          activate_button_option: 2,
+          adjust_tooltip: { top: -160 },
+        },
+        {
+          element: "#account_0 .account-balance-select",
+          title: "Reveal all accounts",
+          description: "Click here agian and choose Select Invoices.",
+          click_listener: true,
+          activateButton: ".account-summary-select",
+          activate_button_option: 2,
+        },
+        {
+          element: "#account_0 .select-invoices > a",
+          title: "Select Invoices",
+          description:
+            "This selector will reveal button which will take you to the invoices page.",
+          activateButton: "#account_0 .account-balance-select",
+          activate_button_option: 3,
+          click_listener: true,
+        },
+
+        {
+          element: ".accountOverviewInvoices",
+          title: "Invoices",
+          description: "You can also get to Invoices by clicking here.",
+          click_listener: true,
+        },
+
+        {
+          element: ".sidebar-myinvoice",
+          title: "Invoice History",
+          description: "Or on your flyout menu.",
+          click_listener: true,
+          activateButton: ".account-btn",
           adjust_tooltip: {
-            left: -280,
+            left: -250,
+            top: 20,
           },
         },
         {
@@ -943,11 +1235,127 @@
             "If you want some more information about the platform please <a id='show-lightbox-show'>click here<a/>",
         },
       ],
-      stepToStart
+      stepToStart,
+      "isAccountOverviewTourDone"
+    );
+    tour.start();
+  }
+  function startTour_3() {
+    createTourStyle();
+    let stepToStart = localStorage.getItem("stepToStartTour") || 1;
+    const tour = new WebPageTour(
+      [
+        {
+          title: "Welcome to your Invoices page",
+          description:
+            "The section allows you to view all invoices associated with your accoount",
+          activateButton: ".job select",
+          activate_button_option: 1,
+          await_element: ".myaccount.container.invoices",
+          await_class_removal: "loading",
+        },
+        {
+          element: ".job select",
+          title: "All Accounts",
+          description:
+            "Selecting the 'All Accounts' will reveal a consolidated view of all invoices across all jobs.",
+          click_listener: true,
+        },
+        {
+          element: ".job select",
+          title: "Use Job 0 for the example.",
+          description:
+            'After you click on "Job 0" you can see all invoices for this account. <span class="bg-highlighted"><b>Notice</b> that navigation buttons will be enabled after data loads.</span>',
+          activateButton: ".job select",
+          activate_button_option: 2,
+          handle_select_click: true,
+          select_option: 2,
+          click_listener: true,
+          await_element: ".myaccount.container.invoices",
+          await_class_removal: "loading",
+          adjust_tooltip: {
+            top: -50,
+            left: -250,
+          },
+        },
+        {
+          element: ".invoice-checkbox-all",
+          title: "Pay invoices",
+          description:
+            "In this column you can choose which option you wish to pay or check the box to select all.",
+          click_listener: true,
+        },
+        {
+          element: "td:has(.invoice-checkbox)",
+          title: "Individal checkbox payment",
+          description:
+            "You can click on this check box to activate the payment button.",
+          click_listener: true,
+        },
+        {
+          element: ".invoices-pay-now > a",
+          title: "Pay Now Button",
+          description:
+            'This button will be activated if you chose any option. <span class="bg-highlighted"><b>Notice</b> that by selecting all unpaid invoices the system will total them together.</span>',
+          click_listener: true,
+          activateButton: ".invoice-checkbox",
+        },
+        {
+          element: ".paymentStatus",
+          title: "Payment Status",
+          description:
+            'In this column you will see your invoices status. <span class="bg-highlighted"><b>Notice</b> that filtering by "Status" is currently unavailable.</span>',
+        },
+        {
+          element: "tr:has(.invoice-checkbox) td:not([class]):has(span)",
+          title: "Payment Status",
+          description:
+            '<span class="bg-highlighted"><b>Notice</b> that all unpaid invoices are also revealed.</span>',
+        },
+        {
+          title: "Thank you",
+          description:
+            "If you want some more information about the platform please <a id='show-lightbox-show'>click here<a/>",
+        },
+      ],
+      stepToStart,
+      "isInvoicesTourDone"
     );
     tour.start();
   }
   //document.addEventListener("DOMContentLoaded", () => {
-  startTour();
+  if (
+    window.location.pathname === "/myaccount" &&
+    !(window.localStorage.getItem("isDashboardTourDone") === "true")
+  ) {
+    startTour_1();
+  }
+  if (
+    window.location.pathname.startsWith("/customer/account-overview") &&
+    !(window.localStorage.getItem("isAccountOverviewTourDone") === "true")
+  ) {
+    if (!document.querySelector(".tour-start")) {
+      const targetElement = document.querySelector(".nav-pills");
+      const listEl = document.createElement("li");
+      listEl.classList.add("tour-start");
+      anchorEl = document.createElement("a");
+      anchorEl.classList.add("tour-start-btn");
+      anchorEl.href = "javascript:;";
+      anchorEl.textContent = "Start Webtour";
+      anchorEl.addEventListener("click", () => {
+        startTour_2();
+      });
+      listEl.append(anchorEl);
+      targetElement.append(listEl);
+    }
+    startTour_2();
+  }
+  if (
+    window.location.pathname.startsWith("/customer/invoices") &&
+    !window.location.pathname.startsWith("/customer/invoices/pay") &&
+    !(window.localStorage.getItem("isInvoicesTourDone") === "true")
+  ) {
+    startTour_3();
+  }
   //});
 })();
