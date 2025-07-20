@@ -1,5 +1,5 @@
 (() => {
-  //if (!$(".ex-u-1864335").length) return;
+  if (!$(".ex-u-1864335").length) return;
   function createTourStyle() {
     const style = document.createElement("style");
     style.classList.add("tour-style");
