@@ -1,4 +1,5 @@
 (() => {
+  //if (!$(".ex-u-1864335").length) return;
   function createTourStyle() {
     const style = document.createElement("style");
     style.classList.add("tour-style");
@@ -168,14 +169,12 @@
       //complete objects
       const checkKeysString = ["activateButton"];
       const checkKeysBoolean = ["handle_select_click", "click_listener"];
-      console.log(this.steps);
       checkKeysString.forEach((e) => {
         this.steps.forEach((obj) => (obj[e] ??= ""));
       });
       checkKeysBoolean.forEach((e) => {
         this.steps.forEach((obj) => (obj[e] ??= false));
       });
-      console.log(this.steps);
     }
 
     start() {
@@ -450,14 +449,7 @@
       if (this.inProgress) return;
       this.inProgress = true;
       this.currentStep = stepIndex;
-      console.log(
-        "Current step: ",
-        this.currentStep,
-        "Step started from: ",
-        this.stepToStart,
-        "Last Step: ",
-        this.lastStep
-      );
+
       // check if this is the first run of the first step
       const isFirstRun = this.currentStep === this.lastStep;
 
@@ -1328,6 +1320,24 @@
     window.location.pathname === "/myaccount" &&
     !(window.localStorage.getItem("isDashboardTourDone") === "true")
   ) {
+    if (!document.querySelector(".tour-start")) {
+      const targetElement = document.querySelector(".myaccount-grid-title");
+      const divEl = document.createElement("div");
+      divEl.classList.add("tour-start");
+      divEl.style =
+        "margin-left: 20px; display: flex; justify-content: center; align-items: center;";
+      anchorEl = document.createElement("a");
+      anchorEl.classList.add("tour-start-btn");
+      anchorEl.href = "javascript:;";
+      anchorEl.style =
+        "background-color: rgb(251, 241, 210); font-weight: 500; font-size: 0.9rem; display: block; padding: 10px 15px;";
+      anchorEl.textContent = "Start Webtour";
+      anchorEl.addEventListener("click", () => {
+        startTour_1();
+      });
+      divEl.append(anchorEl);
+      targetElement.append(divEl);
+    }
     startTour_1();
   }
   if (
@@ -1341,6 +1351,8 @@
       anchorEl = document.createElement("a");
       anchorEl.classList.add("tour-start-btn");
       anchorEl.href = "javascript:;";
+      anchorEl.style =
+        "background-color: rgb(251, 241, 210); font-weight: 500; font-size: 0.9rem; display: block;";
       anchorEl.textContent = "Start Webtour";
       anchorEl.addEventListener("click", () => {
         startTour_2();
@@ -1355,6 +1367,22 @@
     !window.location.pathname.startsWith("/customer/invoices/pay") &&
     !(window.localStorage.getItem("isInvoicesTourDone") === "true")
   ) {
+    if (!document.querySelector(".tour-start")) {
+      const targetElement = document.querySelector(".nav-pills");
+      const listEl = document.createElement("li");
+      listEl.classList.add("tour-start");
+      anchorEl = document.createElement("a");
+      anchorEl.classList.add("tour-start-btn");
+      anchorEl.href = "javascript:;";
+      anchorEl.style =
+        "background-color: rgb(251, 241, 210); font-weight: 500; font-size: 0.9rem; display: block;";
+      anchorEl.textContent = "Start Webtour";
+      anchorEl.addEventListener("click", () => {
+        startTour_3();
+      });
+      listEl.append(anchorEl);
+      targetElement.append(listEl);
+    }
     startTour_3();
   }
   //});
