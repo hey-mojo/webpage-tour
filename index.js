@@ -169,6 +169,7 @@
       //complete objects
       const checkKeysString = ["activateButton"];
       const checkKeysBoolean = ["handle_select_click", "click_listener"];
+
       checkKeysString.forEach((e) => {
         this.steps.forEach((obj) => (obj[e] ??= ""));
       });
